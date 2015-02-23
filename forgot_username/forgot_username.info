@@ -1,0 +1,5 @@
+name = Forgot Username
+description = Mails the username if forgotten.
+package = Drupal 7 Development
+core = 7.x
+files[] = forgot_username.module
