@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the Forgot Username module.
+ */
+
+/**
+ * Implements hook_uninstall().
+ * unset all variables
+ */
+function forgot_username_uninstall() {
+  variable_del('user_mail_recover_username_subject');
+  variable_del('user_mail_recover_username_body');
+}
+
+/**
+ * Implements hook_enable().
+ * Set mail template variables when module is enabled.
+ */
+function forgot_username_enable(){
+  variable_set('user_mail_recover_username_subject', forgot_username_mail_text('recover_username_subject', NULL, array(), FALSE));
+  variable_set('user_mail_recover_username_body', forgot_username_mail_text('recover_username_body', NULL, array(), FALSE));
+}

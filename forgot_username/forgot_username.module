@@ -1,0 +1,144 @@
+<?php
+/**
+ * @file 
+ * Provides form for requesting a forgotten username.
+ *
+ * A user who has forgotten their username can enter their e-mail address into
+ * the form, and if it matches an active account, the information will be
+ * sent to entered e-mail address.
+ */
+
+/**
+ * Implements hook_menu().
+ *
+ * Forgotten Username page is created with path "user/username".
+ */
+function forgot_username_menu() {
+  // Forgot username form page.
+  $items['user/username'] = array(
+    'title' => 'Forgotten Username',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('forgot_username_username'),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'forgot_username.pages.inc',
+    'weight' => '10',
+  );
+  return $items;
+}
+
+
+/**
+ * Implements hook_form_USER_ADMIN_SETTINGS_alter().
+ */
+function forgot_username_form_user_admin_settings_alter(&$form, &$form_state, $form_id) {
+  $email_token_help = t('Available variables are: [site:name], [site:url], [user:name], [user:mail], [site:login-url], [site:url-brief], [user:edit-url], [user:one-time-login-url], [user:cancel-url].');
+
+  $form['email_recover_username'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Username recovery'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Edit the e-mail messages sent to users who request username.') . ' ' . $email_token_help,
+    '#group' => 'email',
+    '#weight' => 11,
+  );
+  $form['email_recover_username']['user_mail_recover_username_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => forgot_username_mail_text('recover_username_subject', NULL, array(), FALSE),
+    '#maxlength' => 180,
+  );
+  $form['email_recover_username']['user_mail_recover_username_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => forgot_username_mail_text('recover_username_body', NULL, array(), FALSE),
+    '#rows' => 12,
+  );
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function forgot_username_form_user_login_block_alter(&$form, &$form_state, $form_id) {
+  $items[] = l(t('Forgotten Username'), 'user/username',
+      array(
+        'attributes' => array(
+          'title' => t('Request new username via e-mail.'),
+        ),
+      )
+    );
+  $form['links']['#markup'] .= theme('item_list', array('items' => $items));
+}
+
+/**
+ * Returns a mail string for a variable name.
+ *
+ * Used by hook_form_alter() for user_admin_settings() to retrieve strings.
+ */
+function forgot_username_mail_text($key, $language = NULL, $variables = array(), $replace = TRUE) {
+  $text = '';
+  $langcode = isset($language) ? $language->language : NULL;
+
+  if ($admin_setting = variable_get('user_mail_' . $key, FALSE)) {
+    // An admin setting overrides the default string.
+    $text = t($admin_setting, array(), array('langcode' => $langcode));
+  }
+  else {
+    // No override, return default string.
+    switch ($key) {
+      case 'recover_username_subject':
+        $text = t('Username request at [site:name]', array(), array('langcode' => $langcode));
+        break;
+
+      case 'recover_username_body':
+        $text = t("Hello,\n\nA request to username for your account has been made at [site:name].\n\nusername: [user:name]\n\n--  [site:name] team", array(), array('langcode' => $langcode));
+        break;
+
+    }
+  }
+  if ($replace) {
+    // We do not sanitize the token replacement, since the output of this
+    // replacement is intended for an e-mail message, not a web browser.
+    return token_replace($text, $variables,
+      array(
+        'language' => $language,
+        'callback' => 'user_mail_tokens',
+        'sanitize' => FALSE,
+        'clear' => TRUE)
+      );
+  }
+  return $text;
+}
+
+
+/**
+ * Forgot Username module variables.
+ *
+ * This hook sets variables for mail template in different languages
+ */
+function forgot_username_variable_info($options) {
+
+  // User email tokens.
+  $email_token_help = ' ' . t('Available variables are: [site:name], [site:url], [user:name], [user:mail], [site:login-url], [site:url-brief], [user:edit-url], [user:one-time-login-url], [user:cancel-url].', array(), $options);
+
+  $variables['user_mail_recover_username_[mail_part]'] = array(
+    'type' => 'user_mail',
+    'title' => t('Username recovery email'),
+    'description' => t('Customize e-mail messages sent to users who request username.') . $email_token_help,
+    'group' => 'user_mails',
+  );
+  return $variables;
+}
+
+
+/**
+ * Implements hook_preprocess_page().
+ *
+ * This hook is used to override default title of page.
+ */
+function forgot_username_preprocess_page(&$variables) {
+  if (arg(0) == 'user' && arg(1) == 'username') {
+    drupal_set_title(t('Forgotten Username'));
+  }
+}

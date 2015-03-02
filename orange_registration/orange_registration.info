@@ -1,0 +1,7 @@
+name = Orange Registration
+description = Registration process for orange.
+package = Drupal 7 Development
+core = 7.x
+files[] = orange_registration.module
+
+scripts[] = orange_registration.js
