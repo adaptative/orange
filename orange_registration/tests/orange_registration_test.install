@@ -1,0 +1,33 @@
+<?php
+
+/**
+ * @file
+ *
+ * Install, update, and uninstall functions for the Orange Registration module.
+ */
+
+/**
+ * Implements hook_enable().
+ * Set mail template variables when module is enabled.
+ */
+/*
+function orange_registration_test_enable() {
+  variable_set('user_mail_verify_orange_user_subject', orange_registration_mail_text('verify_orange_user_subject', NULL, array(), FALSE));
+  variable_set('user_mail_verify_orange_user_body', orange_registration_mail_text('verify_orange_user_body', NULL, array(), FALSE));
+  variable_set('user_mail_decline_orange_user_subject', orange_registration_mail_text('decline_orange_user_subject', NULL, array(), FALSE));
+  variable_set('user_mail_decline_orange_user_body', orange_registration_mail_text('decline_orange_user_body', NULL, array(), FALSE));
+}
+
+*/
+
+
+/**
+ * Implements hook_uninstall().
+ * unset all variables
+ */
+function orange_registration_test_uninstall() {
+  variable_del('user_mail_verify_orange_user_subject');
+  variable_del('user_mail_verify_orange_user_body');
+  variable_del('user_mail_decline_orange_user_subject');
+  variable_del('user_mail_decline_orange_user_body');
+}

@@ -1,0 +1,606 @@
+<?php
+
+/**
+ * @file
+ * Orange Registration Email Validation Process.
+ *
+ * If user is of a predefined domain, account can be created without approval.
+ * If user is not of a predefined domain and dont have an orange contact, account is activated by admin.
+ * If user is not of a predefined domain and have an orange contact,
+ * account is verified by orange contact and activated by admin.
+ *
+ */
+
+function orange_registration_test_enable() {
+
+  variable_set('user_mail_verify_orange_user_subject', orange_registration_mail_text('verify_orange_user_subject', NULL, array(), FALSE));
+  variable_set('user_mail_verify_orange_user_body', orange_registration_mail_text('verify_orange_user_body', NULL, array(), FALSE));
+  variable_set('user_mail_decline_orange_user_subject', orange_registration_mail_text('decline_orange_user_subject', NULL, array(), FALSE));
+  variable_set('user_mail_decline_orange_user_body', orange_registration_mail_text('decline_orange_user_body', NULL, array(), FALSE));
+
+
+  // Check if our field is not already created.
+  if (!field_info_field('field_first_name')) {
+
+    // Create the field base.
+    $field = array(
+      'field_name' => 'field_first_name', 
+      'type' => 'text', 
+    );
+    field_create_field($field);
+
+    // Create the field instance on the bundle.
+    $instance = array(
+      'field_name' => 'field_first_name', 
+      'entity_type' => 'user', 
+      'label' => 'First Name', 
+      'bundle' => 'user', 
+      // If you don't set the "required" property then the field wont be required by default.
+      'required' => TRUE,
+      'settings' => array(
+        // Here you inform either or not you want this field showing up on the registration form.
+        'user_register_form' => 1,
+      ),
+      'widget' => array(
+        'type' => 'textfield',
+      ), 
+    );
+    field_create_instance($instance);
+  }
+
+
+  // Check if our field is not already created.
+  if (!field_info_field('field_last_name')) {
+
+    // Create the field base.
+    $field = array(
+      'field_name' => 'field_last_name', 
+      'type' => 'text', 
+    );
+    field_create_field($field);
+
+    // Create the field instance on the bundle.
+    $instance = array(
+      'field_name' => 'field_last_name', 
+      'entity_type' => 'user', 
+      'label' => 'Last Name', 
+      'bundle' => 'user', 
+      // If you don't set the "required" property then the field wont be required by default.
+      'required' => TRUE,
+      'settings' => array(
+        // Here you inform either or not you want this field showing up on the registration form.
+        'user_register_form' => 1,
+      ),
+      'widget' => array(
+        'type' => 'textfield',
+      ), 
+    );
+    field_create_instance($instance);
+  }
+
+  // Check if our field is not already created.
+  if (!field_info_field('field_phone_number')) {
+
+    // Create the field base.
+    $field = array(
+      'field_name' => 'field_phone_number', 
+      'type' => 'text', 
+    );
+    field_create_field($field);
+
+    // Create the field instance on the bundle.
+    $instance = array(
+      'field_name' => 'field_phone_number', 
+      'entity_type' => 'user', 
+      'label' => 'Phone Number', 
+      'bundle' => 'user', 
+      // If you don't set the "required" property then the field wont be required by default.
+      'required' => TRUE,
+      'settings' => array(
+        // Here you inform either or not you want this field showing up on the registration form.
+        'user_register_form' => 1,
+      ),
+      'widget' => array(
+        'type' => 'textfield',
+      ), 
+    );
+    field_create_instance($instance);
+  }
+
+
+  // Check if our field is not already created.
+  if (!field_info_field('field_your_orange_contact')) {
+
+    // Create the field base.
+    $field = array(
+      'field_name' => 'field_your_orange_contact', 
+      'type' => 'text', 
+    );
+    field_create_field($field);
+
+    // Create the field instance on the bundle.
+    $instance = array(
+      'field_name' => 'field_your_orange_contact', 
+      'entity_type' => 'user', 
+      'label' => 'Your Orange Contact', 
+      'bundle' => 'user', 
+      // If you don't set the "required" property then the field wont be required by default.
+      'required' => FALSE,
+      'settings' => array(
+        // Here you inform either or not you want this field showing up on the registration form.
+        'user_register_form' => 1,
+      ),
+      'widget' => array(
+        'type' => 'textfield',
+      ), 
+    );
+    field_create_instance($instance);
+  }
+
+   // Check if our field is not already created.
+  if (!field_info_field('field_orange_name')) {
+
+    // Create the field base.
+    $field = array(
+      'field_name' => 'field_orange_name', 
+      'type' => 'text', 
+    );
+    field_create_field($field);
+
+    // Create the field instance on the bundle.
+    $instance = array(
+      'field_name' => 'field_orange_name', 
+      'entity_type' => 'user', 
+      'label' => 'Orange Contact Name', 
+      'bundle' => 'user', 
+      // If you don't set the "required" property then the field wont be required by default.
+      'required' => FALSE,
+      'settings' => array(
+        // Here you inform either or not you want this field showing up on the registration form.
+        'user_register_form' => 1,
+      ),
+      'widget' => array(
+        'type' => 'textfield',
+      ), 
+    );
+    field_create_instance($instance);
+  }
+
+
+  // Check if our field is not already created.
+  if (!field_info_field('field_orange_email')) {
+
+    // Create the field base.
+    $field = array(
+      'field_name' => 'field_orange_email', 
+      'type' => 'text', 
+    );
+    field_create_field($field);
+
+    // Create the field instance on the bundle.
+    $instance = array(
+      'field_name' => 'field_orange_email', 
+      'entity_type' => 'user', 
+      'label' => 'Orange Contact Email', 
+      'bundle' => 'user', 
+      // If you don't set the "required" property then the field wont be required by default.
+      'required' => FALSE,
+      'settings' => array(
+        // Here you inform either or not you want this field showing up on the registration form.
+        'user_register_form' => 1,
+      ),
+      'widget' => array(
+        'type' => 'textfield',
+      ), 
+    );
+    field_create_instance($instance);
+  }
+
+
+
+  // Check if our field is not already created.
+  if (!field_info_field('field_why_i_need_access_')) {
+
+    // Create the field base.
+    $field = array(
+      'field_name' => 'field_why_i_need_access_', 
+      'type' => 'text', 
+    );
+    field_create_field($field);
+
+    // Create the field instance on the bundle.
+    $instance = array(
+      'field_name' => 'field_why_i_need_access_', 
+      'entity_type' => 'user', 
+      'label' => 'Why I need access', 
+      'bundle' => 'user', 
+      // If you don't set the "required" property then the field wont be required by default.
+      'required' => FALSE,
+      'settings' => array(
+        // Here you inform either or not you want this field showing up on the registration form.
+        'user_register_form' => 1,
+      ),
+      'widget' => array(
+        'type' => 'text_long',
+      ), 
+    );
+    field_create_instance($instance);
+  }
+}
+
+
+ /**
+  * Implements hook_form_USER_REGISTER_FORM_alter().
+  */
+function orange_registration_test_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+  // Only alter user forms if there is more than one language.
+ // if (drupal_multilingual() && isset($form['locale'])) {
+  if (drupal_multilingual() && isset($form['locale'])) {
+    $form['locale']['language']['#type'] = 'select';
+    $form['locale']['#access'] = TRUE;
+    $form['locale']['#title'] = '';
+    $form['locale']['#weight'] = '5';
+  }
+  // Custom validation function.
+  $form['#validate'][] = 'orange_registration_test_validate';
+  // Custom submit function.
+  $form['#submit'][] = 'orange_registration_test_submit';
+}
+
+ /**
+  * Implements hook_form_USER_ADMIN_SETTINGS_alter().
+  */
+function orange_registration_test_form_user_admin_settings_alter(&$form, &$form_state, $form_id) {
+  $email_token_help = t('Available variables are: [site:name], [site:url], [user:name], [user:mail], [site:login-url], [site:url-brief], [user:edit-url], [user:one-time-login-url], [user:cancel-url].');
+
+  $form['email_verify_orange_user'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Welcome (awaiting orange verification)'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Edit the welcome e-mail messages sent to new members upon registering, when orange verification is required.') . ' ' . $email_token_help,
+    '#group' => 'email',
+    '#weight' => 12,
+  );
+  $form['email_verify_orange_user']['user_mail_verify_orange_user_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => orange_registration_mail_text('verify_orange_user_subject', NULL, array(), FALSE),
+    '#maxlength' => 180,
+  );
+  $form['email_verify_orange_user']['user_mail_verify_orange_user_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => orange_registration_mail_text('verify_orange_user_body', NULL, array(), FALSE),
+    '#rows' => 12,
+  );
+
+  $form['email_decline_orange_user'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Declined by orange'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => t('Edit the declined e-mail messages sent to member when orange verification is declined.') . ' ' . $email_token_help,
+    '#group' => 'email',
+    '#weight' => 13,
+  );
+  $form['email_decline_orange_user']['user_mail_decline_orange_user_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#default_value' => orange_registration_mail_text('decline_orange_user_subject', NULL, array(), FALSE),
+    '#maxlength' => 180,
+  );
+  $form['email_decline_orange_user']['user_mail_decline_orange_user_body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#default_value' => orange_registration_mail_text('decline_orange_user_body', NULL, array(), FALSE),
+    '#rows' => 12,
+  );
+}
+
+/**
+ * Orange Registration module variables.
+ * 
+ * This hook sets variables for mail template in different languages.
+ */
+function orange_registration_test_variable_info($options) {
+  // User email tokens.
+  $email_token_help = ' ' . t('Available variables are: [site:name], [site:url], [user:name], [user:mail], [site:login-url], [site:url-brief], [user:edit-url], [user:one-time-login-url], [user:cancel-url].', array(), $options);
+
+  $variables['user_mail_verify_orange_user_[mail_part]'] = array(
+    'type' => 'user_mail',
+    'title' => t('Welcome, awaiting orange verification'),
+    'description' => t('Customize welcome e-mail messages sent to new members upon registering, when orange verification is required.') . $email_token_help,
+    'group' => 'user_mails',
+  );
+
+  $variables['user_mail_decline_orange_user_[mail_part]'] = array(
+    'type' => 'user_mail',
+    'title' => t('Declined by orange user'),
+    'description' => t('Customize declined e-mail messages sent to member when orange verification is declined.') . $email_token_help,
+    'group' => 'user_mails',
+  );
+  return $variables;
+}
+
+
+/**
+ * Form validation handler for user_register_form().
+ *
+ * @see orange_registration_submit()
+ */
+function orange_registration_test_validate($form, &$form_state) {
+  // Load predefined domains & compare if email is in predefined domain
+  $name = 'white_list_email';
+
+  $myvoc = taxonomy_vocabulary_machine_name_load($name);
+  $tree = taxonomy_get_tree($myvoc->vid);
+  $mail = $form_state['values']['mail'];
+
+
+  $flag = 0;
+
+  foreach ($tree as $term) {
+    if (strpos($mail, $term->name) !== FALSE) {
+      $flag = 1;
+    }
+  }
+
+  // If email is not in predefined domain, make the field required based on user selection
+  if ($flag != '1') {
+    if (!isset($form_state['values']['field_your_orange_contact']['und']) || empty($form_state['values']['field_your_orange_contact']['und']['0']['value'])) {
+      form_set_error('field_your_orange_contact', t('Your Orange contact is required.'));
+    }
+    else {
+      if ($form_state['values']['field_your_orange_contact']['und']['0']['value'] == '1') {
+        if ((!isset($form_state['values']['field_orange_name']['und']) || empty($form_state['values']['field_orange_name']['und']['0']['value'])) && (!isset($form_state['values']['field_orange_email']['und']) || empty($form_state['values']['field_orange_email']['und']['0']['value']))) {
+          form_set_error('field_orange_name', t('Orange Name is required.'));
+          form_set_error('field_orange_email', t('Orange Email is required.'));
+        }
+        elseif (!isset($form_state['values']['field_orange_name']['und']) || empty($form_state['values']['field_orange_name']['und']['0']['value'])) {
+          form_set_error('field_orange_name', t('Orange Name is required.'));
+        }
+        elseif (!isset($form_state['values']['field_orange_email']['und']) || empty($form_state['values']['field_orange_email']['und']['0']['value'])) {
+          form_set_error('field_orange_email', t('Orange Email is required.'));
+        }
+      }
+      elseif ($form_state['values']['field_your_orange_contact']['und']['0']['value'] == '2' && (!isset($form_state['values']['field_why_i_need_access_']['und']) || empty($form_state['values']['field_why_i_need_access_']['und']['0']['value']))) {
+        form_set_error('field_why_i_need_access_', t('Why I need access is required.'));
+      }
+    }
+  }
+}
+
+
+/**
+ * Form submission handler for user_register_form().
+ *
+ * @see orange_registration_validate()
+ */
+function orange_registration_test_submit($form, &$form_state) {
+  global $language;
+  // Load predefined domains & compare if email is in predefined domain
+  $name = 'white_list_email';
+  $myvoc = taxonomy_vocabulary_machine_name_load($name);
+  $tree = taxonomy_get_tree($myvoc->vid);
+  $mail = $form_state['values']['mail'];
+  $flag = 0;
+  foreach ($tree as $term) {
+    if (strpos($mail, $term->name) !== FALSE) {
+      $flag = 1;
+    }
+  }
+  // case 2, If user is not of a predefined domain and dont have an orange contact, account is activated by admin.
+  // case 1, If user is not of a predefined domain and have an orange contact, account is verified by orange contact and activated by admin.
+  if ($flag != '1') {
+    if (isset($form_state['values']['field_your_orange_contact']['und']) && !empty($form_state['values']['field_your_orange_contact']['und']['0']['value'])) {
+      $account = user_load($form_state['values']['uid']);
+      switch ($form_state['values']['field_your_orange_contact']['und']['0']['value']) {
+        case '2':
+          $mail = _user_mail_notify('register_pending_approval', $account, $language);
+          if (!empty($mail)) {
+            unset($_SESSION['messages']);
+            drupal_set_message(t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />In the meantime, a welcome message with further instructions has been sent to your e-mail address.'));
+          }
+          break;
+
+        case '1':
+          $to = $form_state['values']['field_orange_email']['und']['0']['value'];
+          $from = variable_get('site_mail', ini_get('sendmail_from'));
+          $params['account'] = $account;
+          drupal_mail('orange_registration', 'verify_orange', $to, language_default(), $params, $from);
+          $mail = _user_mail_notify('verify_orange_user', $account, $language);
+          if (!empty($mail)) {
+            unset($_SESSION['messages']);
+            drupal_set_message(t('Thank you for applying for an account. Your account is currently pending verification by orange user.<br />In the meantime, a welcome message with further instructions has been sent to your e-mail address.'));
+          }
+          break;
+
+      }
+      $account = user_save($account, array('status' => 0));
+      watchdog('action', 'Blocked user %name.', array('%name' => $account->name));
+    }
+  }
+}
+
+
+/**
+ * Returns a mail string for a variable name.
+ * Used by hook_form_USER_ADMIN_SETTINGS_alter() and orange_registration_enable() to retrieve strings.
+ */
+function orange_registration_test_mail_text($key, $language = NULL, $variables = array(), $replace = TRUE) {
+  $text = '';
+  $langcode = isset($language) ? $language->language : NULL;
+
+  if ($admin_setting = variable_get('user_mail_' . $key, FALSE)) {
+    // An admin setting overrides the default string.
+    $text = t($admin_setting, array(), array('langcode' => $langcode));
+  }
+  else {
+    // No override, return default string.
+    switch ($key) {
+      case 'verify_orange_subject':
+        $text = t("Account details for [user:name] at [site:name] (pending orange verification)", array(), array('langcode' => $langcode));
+        break;
+
+      case 'verify_orange_body':
+        $text = t("[user:name] has applied for an account.\n\n<a href='@verify'>Verify account</a> \n\n<a href='@decline'>Decline account</a>", array('@verify' => url('user_verify/' . $variables['user']->uid . '/' . $variables['user']->created), '@decline' => url('user_declined/' . $variables['user']->uid . '/' . $variables['user']->created)), array(), array('langcode' => $langcode));
+        break;
+
+       case 'verify_orange_user_subject':
+        $text = t("Account details for [user:name] at [site:name] (pending orange verification)", array(), array('langcode' => $langcode));
+        break;
+
+      case 'verify_orange_user_body':
+        $text = t("[user:name],\n\nThank you for registering at [site:name]. Your application for an account is currently pending verification by orange user. Once it has been verified, mail will be sent to admin for further processing.\n\n--  [site:name] team", array(), array('langcode' => $langcode));
+        break;
+
+      case 'decline_orange_user_subject':
+        $text = t("Declined [user:name] at [site:name]", array(), array('langcode' => $langcode));
+        break;
+
+      case 'decline_orange_user_body':
+        $text = t("[user:name],\n\nYour application for an account is declined by orange user.\n\n--  [site:name] team", array(), array('langcode' => $langcode));
+        break;
+
+    }
+  }
+  if ($replace) {
+    // We do not sanitize the token replacement, since the output of this
+    // replacement is intended for an e-mail message, not a web browser.
+    return token_replace($text, $variables,
+      array(
+        'language' => $language,
+        'callback' => 'user_mail_tokens',
+        'sanitize' => FALSE,
+        'clear' => TRUE)
+      );
+  }
+  return $text;
+}
+
+
+/**
+ * Implements hook_mail().
+ */
+function orange_registration_test_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'verify_orange':
+      $language = $message['language'];
+      $variables = array('user' => $params['account']);
+      $message['subject'] .= orange_registration_mail_text($key . '_subject', $language, $variables);
+      $message['body']['0'] = orange_registration_mail_text($key . '_body', $language, $variables);
+       break;
+
+  }
+}
+
+
+/**
+ * Implements hook_menu().
+ *
+ * Page "ajax/orange_email" is created to check if email is of predefined domain by ajax call.
+ * page "user_verify" is for user verfication of by an orange user. First parameter is UID and second is CREATED TIME.
+ */
+function orange_registration_test_menu() {
+  $items = array();
+  $items['ajax/orange_email']=array(
+    'type' => MENU_SUGGESTED_ITEM,
+    'page callback' => 'custom_ajax_orange_email',
+    'access callback' => TRUE,
+  );
+  $items['user_verify/%/%']=array(
+    'type' => MENU_SUGGESTED_ITEM,
+    'page callback' => 'orange_registration_verify',
+    'access callback' => TRUE,
+  );
+  $items['user_declined/%/%']=array(
+    'type' => MENU_SUGGESTED_ITEM,
+    'page callback' => 'orange_registration_declined',
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+
+/*
+ * This function builds a page for declining by orange user.
+ * Mail is sent to user that account is declined and account is deleted.
+ */
+function orange_registration_test_declined() {
+  global $language;
+  $arg1 = arg(1);
+  $arg2 = arg(2);
+  if (isset($arg1) && isset($arg2)) {
+    $url_uid = $arg1;
+    $url_created = $arg2;
+    $account = user_load($url_uid);
+    if (isset($account) && !empty($account)) {
+      $select_user = db_query('SELECT uid, created FROM {users} WHERE uid = :uid', array(':uid' => $url_uid));
+      foreach ($select_user as $user_acct) {
+        $db_created = $user_acct->created;
+      }
+      if ($url_created == $db_created) {
+        $mail = _user_mail_notify('decline_orange_user', $account, $language);
+        user_delete($url_uid);
+      }
+      $text = t('Declined and deleted user @name.', array('@name' => $account->name));
+      return $text;
+    }
+    else {
+      return drupal_not_found();
+    }
+  }
+}
+
+
+/*
+ * This function builds a page for user verification by orange user.
+ * Mail is sent to admin for further processing.
+ */
+function orange_registration_test_verify() {
+  global $language;
+  $arg1 = arg(1);
+  $arg2 = arg(2);
+  if (isset($arg1) && isset($arg2)) {
+    $url_uid = $arg1;
+    $url_created = $arg2;
+    $account = user_load($url_uid);
+    if (isset($account) && !empty($account)) {
+      $select_user = db_query('SELECT uid, created FROM {users} WHERE uid = :uid', array(':uid' => $url_uid));
+      foreach ($select_user as $user_acct) {
+        $db_created = $user_acct->created;
+      }
+      if ($url_created == $db_created) {
+        $mail = _user_mail_notify('register_pending_approval', $account, $language);
+      }
+      $text = t('Thank you for verifying @name. Email is sent to admin for further verification.', array('@name' => $account->name));
+      return $text;
+    }
+  }
+  else {
+    return drupal_not_found();
+  }
+}
+
+
+/**
+ * Implements hook_mail_alter().
+ *
+ * Block the default registration mail sent.
+ */
+function orange_registration_test_mail_alter(&$message) {
+  $name = 'white_list_email';
+  $myvoc = taxonomy_vocabulary_machine_name_load($name);
+  $tree = taxonomy_get_tree($myvoc->vid);
+  $flag = 0;
+  foreach ($tree as $term) {
+    if (strpos($message['to'], $term->name) !== FALSE) {
+      $flag = 1;
+    }
+  }
+  if ($flag != '1' && $message['id'] == 'user_register_no_approval_required') {
+      $message['send'] = 0;
+  }
+}
+

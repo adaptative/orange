@@ -1,0 +1,76 @@
+<?php
+
+/**
+ * @file
+ * Functions to check forgot username with various conditions.
+ */
+
+class ForgotUsernameTestCase extends DrupalWebTestCase {
+
+  public static function getInfo() {
+    // Note: getInfo() strings should not be translated.
+    return array(
+    'name' => 'Unit test for forgot username',
+    'description' => 'Test that checks forgot_username works properly.',
+    'group' => 'Forgot Username',
+    );
+  }
+
+  /**
+   * Setup forgot_username module to test forgot username functionality.
+   */
+  function setUp() {
+    parent::setUp('forgot_username');
+  }
+
+
+  /**
+   * We need to check whether user exists or not.
+   * If user with enter email is not exists, throw exception.
+   */
+
+  function testUserExists() {
+    $mail = 'foo@example.com';
+    $edit = array('name' => $mail);
+    $this->drupalPost('user/username', $edit, t('Submit'));
+    $this->assertRaw(t('Sorry, %mail is not recognized as an e-mail address.', array('%mail' => $mail)), 'Message indicates unknown e-mail address.');
+  }
+  
+
+  /**
+   * Tests requesting username for active account.
+   */
+  public function testForgotUsernameActiveAccount() {
+    $account = $this->drupalCreateUser();
+    $edit = array('name' => $account->mail);
+    $this->drupalPost('user/username', $edit, t('Submit'));
+    $this->assertText(t('Username is sent to your e-mail address.'), 'Message indicates username reminder sent.');
+    $expected_email = array(
+      'subject' => token_replace(t("Username request at [site:name]")),
+      'body' => token_replace(t("Hello,\n\nA request to username for your account has been made at [site:name].\n\nusername: [user:name]\n\n--  [site:name] team"), array('user' => $account)) . "\n",
+    );
+    $this->assertMail('subject', $expected_email['subject'], 'Sent e-mail subject matches expectation.');
+    $this->assertMail('body', $expected_email['body'], 'Sent e-mail body matches expectation.');
+  }
+ 
+
+  /**
+   * Tests requesting username for active account with logged in user.
+   */
+  public function testForgotUsernameLoggedIn() {
+    // Create a user.
+    $account = $this->drupalCreateUser(array());
+    $this->drupalLogin($account);
+
+    $edit = array();
+    
+    $this->drupalPost('user/username', $edit, t('Submit'));
+    $this->assertText(t('Username is sent to your e-mail address.'), 'Message indicates username reminder sent.');
+    $expected_email = array(
+      'subject' => token_replace(t("Username request at [site:name]")),
+      'body' => token_replace(t("Hello,\n\nA request to username for your account has been made at [site:name].\n\nusername: [user:name]\n\n--  [site:name] team"), array('user' => $account)) . "\n",
+    );
+    $this->assertMail('subject', $expected_email['subject'], 'Sent e-mail subject matches expectation.');
+    $this->assertMail('body', $expected_email['body'], 'Sent e-mail body matches expectation.');
+  }
+}

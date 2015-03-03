@@ -1,0 +1,6 @@
+name = "Orange Registration module access tests"
+description = "Support module for node permission testing."
+package = Orange Registration Testing
+version = VERSION
+core = 7.x
+hidden = TRUE

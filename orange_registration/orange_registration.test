@@ -1,0 +1,163 @@
+<?php
+
+/**
+ * @file
+ * Tests for orange registration module.
+ */
+class OrangeRegistrationTests extends DrupalWebTestCase {
+
+  public static function getInfo() {
+    // Note: getInfo() strings should not be translated.
+    return array(
+      'name' => 'Registration test',
+      'description' => 'Test that defines registration module.',
+      'group' => 'Orange Registration',
+    );
+  }
+
+  /**
+   * Returns a new vocabulary with machine name 'white_list_email'.
+   */
+  function createVocabulary() {
+    // Create a vocabulary.
+    $vocabulary = new stdClass();
+    $vocabulary->name = 'White List Email';
+    $vocabulary->description = $this->randomName();
+    $vocabulary->machine_name = 'white_list_email';
+    $vocabulary->help = '';
+    $vocabulary->weight = mt_rand(0, 10);
+    taxonomy_vocabulary_save($vocabulary);
+    return $vocabulary;
+  }
+
+  /**
+   * Returns a new term with random properties in vocabulary $vid (white_list_email).
+   */
+  function createTerm($vocabulary, $termName) {
+    $term = new stdClass();
+    $term->name = $termName . '.com';
+    $term->description = $this->randomName();
+    // Use the first available text format.
+    $term->format = db_query_range('SELECT format FROM {filter_format}', 0, 1)->fetchField();
+    $term->vid = $vocabulary->vid;
+    taxonomy_term_save($term);
+    return $term;
+  }
+
+  /**
+   * Setup user_registration_test module to test registration functionality.
+   * Also need to create new vocabulary and add terms to check white email list.
+   */
+  function setUp() {
+    parent::setUp('orange_registration_test');
+    
+    //Create admin user to create new taxonomy.
+    $this->admin_user = $this->drupalCreateUser(array('administer taxonomy'));
+    
+    $this->drupalLogin($this->admin_user);  //Login with newly created admin user.
+    
+    $this->vocabulary = $this->createVocabulary();  //call to function for create new vocabulary.
+
+    // Add a term named 'orange'.
+    $first_term = $this->createTerm($this->vocabulary, 'orange');
+
+    // Add a term named 'yahoo'.
+    $second_term = $this->createTerm($this->vocabulary, 'yahoo');
+
+    // Add another term named 'addwebsolution'.
+    $third_term = $this->createTerm($this->vocabulary, 'addwebsolution');
+
+    $this->drupalLogout();  // logut from admin panel after creating new vocabulary and terms.
+  }
+
+  /**
+   * First we check for the email address that is on white_list_email.
+   * We have created new terms with 'orange.com', 'yahoo.com' and 'addwebsolution.com'
+   * Check with email address with one of this email address domains.
+   */
+  function testOrangeContact() {
+
+    // Allow registration by site visitors without administrator approval.
+    variable_set('user_register', USER_REGISTER_VISITORS);
+
+    // We need to initialize an array for registration for fields.
+    $edit = array();
+    $edit['name'] = $name = $this->randomName();  //username to be register
+    $edit['mail'] = $mail = 'abc123123@addwebsolution.com';  //Email address for user
+    $edit['field_first_name[und][0][value]'] = 'fname';  //User first name
+    $edit['field_last_name[und][0][value]'] = 'lname';  //	User last name
+    $edit['field_phone_number[und][0][value]'] = '1231231311';  // User Mobile Number		
+
+    $this->drupalPost('user/register', $edit, t('Create new account'));  // Post assigned variables on user/register page.
+    
+    // Check if stated text is appeaerd on screen, then pass this case.
+    $this->assertText(t('A welcome message with further instructions has been sent to your e-mail address.'), 'This message indicates that orange contact has been successful register and mail has been sent to user.');
+  }
+
+
+  /**
+   * If user's email address is not matched with one of 'white_list_email', 
+   * then user need to select whether he has any orange contact in reference or not.
+   * If so, orange contact will notified with user details to accept or decline user.
+   */
+  function testOrangeContactApproveUser() {
+
+    // Allow registration by site visitors without administrator approval.
+    variable_set('user_register', USER_REGISTER_VISITORS);
+
+    // We need to initialize an array for registration for fields.
+    $edit = array();
+    $edit['name'] = $name = $this->randomName();  //username to be register
+    $edit['mail'] = $mail = 'abc123123@test.com';  //Email address for user
+    $edit['field_first_name[und][0][value]'] = 'fname';  //User first name
+    $edit['field_last_name[und][0][value]'] = 'lname';  //User last name
+    $edit['field_phone_number[und][0][value]'] = '1231231311';  // User Mobile Number
+
+    // Check wheter user selects he had orange contact or not. 
+    // Set "1" if user has orange contact to approve his account.
+    $edit['field_your_orange_contact[und][0][value]'] = '1';
+
+
+    // If selected "I have an Orange Contact" from radio button, user need to provide orange contact name and email.
+    $edit['field_orange_name[und][0][value]'] = 'orangeContactName';
+    $edit['field_orange_email[und][0][value]'] = 'email@addwebsolution.com';
+
+    $this->drupalPost('user/register', $edit, t('Create new account'));  // Post assigned variables on user/register page.
+    
+    // Check if stated text is appeaerd on screen, then pass this case.
+    $this->assertText(t('Your account is currently pending verification by orange user.'), 'This message indicates that mail has been sent to orange contact and pending for approval by orange contact.');
+  }
+
+  
+  /**
+   * If user's doesn't have any reference orange contact, user need to give brief
+   * why he/she needs access orange, this reason will mailed to admin for approval
+   */
+  function testWhyNeedAccountUser() {
+
+    // Allow registration by site visitors without administrator approval.
+    variable_set('user_register', USER_REGISTER_VISITORS);
+
+
+    // We need to initialize an array for registration for fields.
+    $edit = array();
+    $edit['name'] = $name = $this->randomName();  //	username to be register
+    $edit['mail'] = $mail = 'abc123123@test.com';  //	Email address for user
+    $edit['field_first_name[und][0][value]'] = 'fname';  //	User first name
+    $edit['field_last_name[und][0][value]'] = 'lname';  //	User last name
+    $edit['field_phone_number[und][0][value]'] = '1231231311';  // User Mobile Number
+
+    // Check wheter user selects he had orange contact or not. 
+    // Set "2" if user doesn't have orange contact to approve his account.
+    // This will sent account approval notification to user
+    $edit['field_your_orange_contact[und][0][value]'] = '2';
+
+    // description text for why user need access to orange.
+    $edit['field_why_i_need_access_[und][0][value]'] = 'Why I need access description text...';
+
+    $this->drupalPost('user/register', $edit, t('Create new account'));  // Post assigned variables on user/register page.
+    
+    // Check if stated text is appeaerd on screen, then pass this case.
+    $this->assertText(t('Your account is currently pending approval by the site administrator.'), 'This message indicates that mail has been sent to admin for approval.');
+  }
+}
